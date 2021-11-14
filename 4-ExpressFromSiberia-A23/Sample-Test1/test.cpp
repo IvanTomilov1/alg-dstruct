@@ -45,7 +45,6 @@ TEST(InsertWordToPositionTesting, MiddleCases) {
 
 	for (int i = 0; i < 6; i++) {
 		EXPECT_STREQ(res[i], desired_res[i]);
-		//EXPECT_TRUE(res[i] == desired_res[i]);
 	}
 }
 

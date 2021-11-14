@@ -116,7 +116,6 @@ ListOfUniqueWords ReadUniqueStringsFromArrayWithAutomaticSorting(string preproce
 		for (int j = position; j >= 0; j--) {
 
 			comp_length = IsFirstWordLengthGreaterThanSecond(preprocessed_text[i], sorted_words.arr[j]);
-			//comp_lex = IsFirstWordLexicographicallyFirstThanSecond(preprocessed_text[i], sorted_words.arr[j]);
 			comp_lex = strcmp(preprocessed_text[i], sorted_words.arr[j]);
 
 			if (comp_length == 1) {
@@ -157,7 +156,6 @@ ListOfUniqueWords ReadUniqueStringsFromArrayWithAutomaticSorting(string preproce
 		}
 	}
 	sorted_words.len = nunique_words;
-	//realloc(sorted_words.arr, nunique_words + 1);
 	return sorted_words;
 }
 
@@ -192,5 +190,3 @@ void PrintWordsLongerThanFixedNumberOfLetters(ListOfUniqueWords list, int N) {
 		printf("%s\n", list.arr[i]);
 	}
 }
-
-//void main() { return; };
