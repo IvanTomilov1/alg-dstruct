@@ -30,6 +30,22 @@ int IsFirstWordLexicographicallyFirstThanSecond(string w1, string w2) {
 	}
 }
 
+string ReadTextFromFile(FILE* file) {
+	assert(file != NULL);
+	fseek(file, 0, SEEK_END);
+	FILE* end = file;
+	fseek(file, 0, SEEK_SET);
+	int i = 0;
+	int number_of_symbols = end - file + 1;
+	string res = (string)malloc(number_of_symbols*sizeof(string));
+	assert(res != NULL);
+	do {
+		fread(res[i], sizeof(string), 1, file);
+		i++;
+	} while (file != EOF);
+	res[i] = '\0';
+	return res;
+}
 
 ListOfUniqueWords DivideTextToWords(string text) {
 	int start_of_word = 0, end_of_word = 0;

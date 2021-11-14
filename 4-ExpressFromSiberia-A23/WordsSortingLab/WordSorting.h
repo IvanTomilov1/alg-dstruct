@@ -7,6 +7,8 @@ typedef struct {
 	string* arr;
 } ListOfUniqueWords;
 
+string ReadTextFromFile(FILE* file);
+
 int IsFirstWordLexicographicallyFirstThanSecond(string w1, string w2);
 
 string* InsertWordToPosition(string array[], string word, int position, int n_words);
