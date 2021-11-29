@@ -1,14 +1,18 @@
 #include <stdio.h>
 #include "memallocator.h"
 
-typedef struct MemBlock {
-	struct MemBlock* next;
-	struct MemBlock* prev;
+#define TRUE 1
+#define FALSE 0
+
+typedef struct block {
+	struct block* next;
+	struct block* prev;
+	char is_allocated;
 	int size;
 } MemBlock;
 
 int memgetminimumsize() {
-	return sizeof(MemBlock) + sizeof(int);
+	return sizeof(MemBlock);// +sizeof(int);
 }
 
 int memgetblocksize() {
@@ -21,12 +25,13 @@ int MemFragmentSize = 0;
 int MemAllocated = 0;
 
 int meminit(void* pMemory, int size) {
-	if (size < memgetminimumsize() || !pMemory) return -1;
+	if ((size < memgetminimumsize()) || (pMemory == NULL)) return -1;
 
 	startBlock = (MemBlock*)pMemory;
 
 	startBlock->prev = NULL;
 	startBlock->next = NULL;
+	startBlock->is_allocated = FALSE;
 	startBlock->size = size - memgetblocksize();
 
 	lastBlock = startBlock;
@@ -37,44 +42,74 @@ int meminit(void* pMemory, int size) {
 
 void* memalloc(int size) {
 
-	MemBlock* newlastBlock = NULL;
+	MemBlock* iterBlock = startBlock;
+	MemBlock* suitBlock = NULL;
 
-	if (!startBlock || (MemAllocated + (memgetblocksize() + size) > MemFragmentSize)) return NULL;
-
-	if (MemAllocated == 0) {
-		lastBlock->size = size;
+    while (iterBlock != NULL) {
+		if ((!iterBlock->is_allocated) && (iterBlock->size >= size)) {
+			suitBlock = iterBlock;
+			break;
+		}
+		iterBlock = iterBlock->next;
 	}
-	else {
-		lastBlock->next = (MemBlock*)((char*)lastBlock + memgetblocksize() + lastBlock->size);
-		newlastBlock = lastBlock->next;
 
-		newlastBlock->prev = lastBlock;
-		newlastBlock->next = NULL;
-		newlastBlock->size = size;
+	if (suitBlock == NULL) return NULL;
 
-		lastBlock = newlastBlock;
+	if (suitBlock->size > size + memgetblocksize()) {
+		iterBlock = (MemBlock*)((char*)suitBlock + memgetblocksize() + size);
+		
+		iterBlock->is_allocated = FALSE;
+		iterBlock->prev = suitBlock;
+		iterBlock->next = suitBlock->next;
+		iterBlock->size = suitBlock->size - (size + memgetblocksize());
+		if (iterBlock->next != NULL) (iterBlock->next)->prev = iterBlock;
+
+		suitBlock->next = iterBlock;
+		suitBlock->size = size;
 	}
+
+	lastBlock = suitBlock;
+	lastBlock->is_allocated = TRUE;
 	MemAllocated += (memgetblocksize() + size);
 
 	return (void*)((char*)lastBlock + memgetblocksize());
 }
 
 void memfree(void* p) {
-	if (MemAllocated > 0) {
-		MemAllocated -= (memgetblocksize() + lastBlock->size);
-		lastBlock = lastBlock->prev;
+	if (p == NULL) return;
+
+	MemBlock* delBlock = (MemBlock*)((char*)p - memgetblocksize());
+
+	if (!delBlock->is_allocated) return;
+
+	MemAllocated -= (memgetblocksize() + delBlock->size);
+
+	delBlock->is_allocated = FALSE;
+
+	if (delBlock->next != NULL){
+		if (!(delBlock->next)->is_allocated) {
+			delBlock->size += (delBlock->next)->size + memgetblocksize();
+			delBlock->next = (delBlock->next)->next;
+			if (delBlock->next != NULL) (delBlock->next)->prev = delBlock;
+		}
+	}
+
+	if (delBlock->prev != NULL){
+		if (!(delBlock->prev)->is_allocated) {
+			(delBlock->prev)->size += delBlock->size + memgetblocksize();
+			(delBlock->prev)->next = delBlock->next;
+			if (delBlock->next != NULL) (delBlock->next)->prev = delBlock->prev;
+			delBlock = delBlock->prev;
+		}
 	}
 }
 
 void memdone() {
 	int checkAllocatedSize = 0;
 	MemBlock* currBlock = startBlock;
-	while (currBlock != NULL) {
-		checkAllocatedSize += (memgetblocksize() + currBlock->size);
+	while (currBlock->next != NULL) {
+		checkAllocatedSize += memgetblocksize() + currBlock->size;
 		currBlock = currBlock->next;
-		if (checkAllocatedSize > MemFragmentSize) {
-			fprintf(stderr, "Error! Memory leak detected\n");
-			break;
-		}
 	}
+	if (checkAllocatedSize != MemFragmentSize) fprintf(stderr, "ERROR: Memory leak");
 }
