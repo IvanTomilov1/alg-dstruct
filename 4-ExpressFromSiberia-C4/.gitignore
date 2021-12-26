@@ -7,4 +7,6 @@ packages/
 *.vcxproj*
 *.suo
 *v16*
-*.config	
+*.config
+*.txt
+	

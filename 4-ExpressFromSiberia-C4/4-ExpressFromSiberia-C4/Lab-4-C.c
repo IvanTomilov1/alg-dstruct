@@ -73,8 +73,10 @@ queue_t* QueueAddEl(queue_t* queue, int val) {
 
 int QueuePop(queue_t* queue) {
 	int res = queue->first->val;
+	qblock_t* mem = queue->first;
 	queue->first = queue->first->next;
 	if (queue->first == NULL) queue->last = NULL;
+	free(mem);
 	return res;
 };
 
@@ -164,26 +166,12 @@ void GraphBFS(graph_t graph) {
 	while (!QueueIsEmpty(vert_queue)) {
 		//Main path of search
 		int vert = QueuePop(vert_queue);
+		printf("%d ", vert);
 		for (int j = 1; j < graph.num_vertex; j++) {
 			if ((graph.adj_matrix->matrix[vert][j] == 1) && (is_visited[j] == 0)) {
 				is_visited[j] = 1;
 				QueueAddEl(vert_queue, j);
 			}
-		}
-		//To avoid incomplete search when graph isn't connected
-		if (QueueIsEmpty(vert_queue)) {
-			for (int j = 0; j < graph.num_vertex; j++) {
-				if (is_visited[j] == 0) {
-					QueueAddEl(vert_queue, j);
-					break;
-				};
-			}
-		}
-	}
-	for (int i = 0; i < graph.num_vertex; i++) {
-		if (!is_visited[i]) {
-			printf("Search is incomplete!");
-			break;
 		}
 	}
 	free(is_visited);
@@ -234,7 +222,7 @@ void StressTest() {
 	GraphBFS(test_graph);
 
 	QueryPerformanceCounter(&end);
-	printf("%lf s", (double)((double)(end.QuadPart - start.QuadPart) / (double)counter.QuadPart));
+	printf("\nTime: %lf s", (double)((double)(end.QuadPart - start.QuadPart) / (double)counter.QuadPart));
 
 	fclose(test_file);
 }
@@ -242,11 +230,17 @@ void StressTest() {
 
 int main()
 {
+	/*
+	graph_t graph = GraphCreate();
+	GraphBFS(graph);
+	GraphDelete(graph);
+	*/
 
-	//graph_t graph = GraphCreate();
-	//GraphBFS(graph);
-	//GraphDelete(graph);
-
+	/*
+	TEST_NUM_VERTICIES 5000
+	Time: 0.345489 s
+	*/
 	StressTest();
 	return 0;
 }
+
